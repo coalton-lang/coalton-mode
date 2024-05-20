@@ -13,7 +13,7 @@ add this directory to your load-path, and require the mode:
 
     ;; Coalton
     
-    (add-to-list 'load-path "~/git/coalton/emacs")
+    (add-to-list 'load-path "~/git/coalton-mode")
     (require 'coalton-mode)
 
 ## Usage
