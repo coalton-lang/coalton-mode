@@ -61,14 +61,20 @@
 (defconst coalton--builtins
   '("declare"
     "define"
+    "define-class"
     "define-instance"
+    "define-struct"
     "define-type"
     "do"
+    "for"
+    "if"
     "let"
     "lisp"
     "match"
+    "monomorphize"
     "package"
-    "repr"))
+    "repr"
+    "while"))
 
 (defconst coalton--builtin-symbol
   (eval-and-compile

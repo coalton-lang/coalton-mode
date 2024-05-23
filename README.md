@@ -4,7 +4,10 @@ working with Coalton code.
 ## Requirements
 
 This mode requires Emacs version 29.1 and above, because it relies on
-tree-sitter.
+tree-sitter. You can check that your copy of Emacs was built with
+support for tree sitter by evaluating:
+
+    (treesit-available-p)
 
 ## Installation
 
