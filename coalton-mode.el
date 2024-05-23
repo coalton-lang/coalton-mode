@@ -59,13 +59,15 @@
 ;; Fontification
 
 (defconst coalton--builtins
-  '("declare"
+  '("cond"
+    "declare"
     "define"
     "define-class"
     "define-instance"
     "define-struct"
     "define-type"
     "do"
+    "fn"
     "for"
     "if"
     "let"
@@ -73,8 +75,18 @@
     "match"
     "monomorphize"
     "package"
+    "progn"
     "repr"
-    "while"))
+    "return"
+    "specialize"
+    "the"
+    "unless"
+    "when"
+    "while"
+    "="
+    "=>"
+    "->"
+    "<-"))
 
 (defconst coalton--builtin-symbol
   (eval-and-compile
