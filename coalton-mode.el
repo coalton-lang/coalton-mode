@@ -251,7 +251,7 @@
       (treesit-inspect-mode))
     (treesit-major-mode-setup)))
 
-(add-to-list 'auto-mode-alist '("\\.coalton\\'" . coalton-mode))
+(add-to-list 'auto-mode-alist '("\\.coal\\'" . coalton-mode))
 
 (defvar coalton--query-package
   (treesit-query-compile
