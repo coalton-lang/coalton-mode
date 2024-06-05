@@ -53,7 +53,9 @@
     table))
 
 (defvar coalton--debug nil
-  "Enable debugging.")
+  "Enable debugging.
+
+Displays current tree-sitter node in mode line, useful for nav and highlighting testing.")
 
 
 ;; Fontification
@@ -103,6 +105,10 @@
    :feature 'number
    :language 'coalton
    '((number) @font-lock-number-face)
+   
+   :feature 'string
+   :language 'coalton
+   '((string) @font-lock-string-face)
    
    :feature 'paren
    :language 'coalton
@@ -230,7 +236,7 @@
               ;; controlled by `treesit-font-lock-level'.
               '((comment)               ; 1
                 ()                      ; 2
-                (number builtin)        ; 3
+                (number string builtin) ; 3
                 (paren)))               ; 4
   (setq-local treesit-simple-indent-rules
               (coalton--indent-rules)))
