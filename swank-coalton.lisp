@@ -25,10 +25,11 @@
   (asdf:load-system "coalton"))
 
 
-(defslimefun swank-coalton--ast-file (text)
-  (with-input-from-string (stream text)
-    (coalton-impl/compiler::generate-ast stream)))
+(defslimefun swank-coalton--codegen (text)
+  (let ((source (coalton-impl/source:make-source-string text)))
+    (coalton-impl/entry:codegen source)))
 
-(defslimefun swank-coalton--compile-file (text)
-  (with-input-from-string (stream text)
-    (coalton-impl/compiler::%compile-file stream)))
+(defslimefun swank-coalton--compile (text)
+  (let ((source (coalton-impl/source:make-source-string text)))
+    (coalton-impl/entry:compile source :load t)
+    "Success"))

@@ -26,8 +26,10 @@
 
 (defvar coalton-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-c") 'slime-coalton--compile-form)
-    (define-key map (kbd "C-c C-l") 'slime-coalton--compile-file)
+    (define-key map (kbd "C-c C-a") 'coalton-ast)
+    (define-key map (kbd "C-c C-g") 'coalton-codegen)
+    (define-key map (kbd "C-c C-l") 'coalton-compile)
+    (define-key map (kbd "C-c C-c") 'coalton-compile-form)
     map))
 
 (defvar coalton-mode-syntax-table
@@ -185,9 +187,9 @@ Displays current tree-sitter node in mode line, useful for nav and highlighting 
   (let ((C '(coalton-available-p)))
     `("Coalton"
       ("Debug"
-       [ "Show AST"         slime-coalton--ast-file ,C ])
+       [ "Show AST"         coalton-ast     ,C ])
       ("Compile"
-       [ "Compile File"     slime-coalton--compile-file ,C ]))))
+       [ "Compile File"     coalton-compile ,C ]))))
 
 (easy-menu-define menubar-coalton coalton-mode-map "Coalton" coalton-easy-menu)
 
