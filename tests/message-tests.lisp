@@ -1,0 +1,15 @@
+(in-package :coalton-lsp/tests)
+
+(lsp::define-message test-message ()
+  (:enable boolean)
+  (:flags (string :vector t))
+  (:debug (boolean :optional t)))
+
+(deftest message-tests/value ()
+  (let ((message (lsp::make-message 'test-message)))
+    (lsp::set-field message :debug t)
+    (lsp::set-field message :flags (list "a" "b" "g"))
+    (is (equalp (lsp::message-value message)
+                '(("flags" "a" "b" "g")
+                  ("debug" . T))))
+    message))
