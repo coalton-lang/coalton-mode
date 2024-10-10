@@ -12,10 +12,7 @@
 
 (require 'treesit)
 (require 'lisp-mnt)
-(require 'slime)
-(require 'slime-coalton)
-
-(add-to-list 'slime-contribs 'slime-coalton)
+(require 'lsp-mode)
 
 (defconst coalton-mode-version
   (eval-when-compile
@@ -228,7 +225,7 @@ Displays current tree-sitter node in mode line, useful for nav and highlighting 
   (let ((treesit-language-source-alist
          `((coalton ,coalton-ts-repo "main"))))
     (unless (treesit-language-available-p 'coalton nil)
-      (when (yes-or-no-p "treesitter-coalton is not installed. Clone, build and install it?")
+      (when (yes-or-no-p "The treesitter-coalton package is not installed.  Clone, build and install it?")
         (treesit-install-language-grammar 'coalton)))))
 
 (defun coalton-mode-variables ()
@@ -298,5 +295,15 @@ Displays current tree-sitter node in mode line, useful for nav and highlighting 
   (when-let ((node (coalton--find-parent (treesit-node-at (point))
                                          #'coalton--toplevel-form-p)))
     (treesit-node-text node t)))
+
+(add-to-list 'lsp-language-id-configuration '(coalton-mode . "coalton"))
+
+(defun coalton--server-args (port)
+  `("~/git/coalton-mode/coalton-mode" ,(number-to-string port)))
+
+(lsp-register-client (make-lsp-client
+                      :new-connection (lsp-tcp-connection #'coalton--server-args)
+                      :activation-fn (lsp-activate-on "coalton")
+                      :server-id 'coalton))
 
 (provide 'coalton-mode)

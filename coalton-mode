@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+#
+# Run a Coalton server
+#
+# Usage:
+#
+#     coalton-mode [ port ]
+#
+#         (port defaults to 7779 if not provided)
+
+port=${1:-7779}
+
+sbcl \
+    --noinform \
+    --load coalton-mode.asd \
+    --eval "(asdf:load-system \"coalton-mode\")" \
+    --eval "(coalton-mode:main :port ${port})"
