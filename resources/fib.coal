@@ -1,0 +1,14 @@
+(package fibonacci
+  (import
+    coalton-prelude)
+  (export
+    fob))
+
+(declare fib (Integer -> Integer))
+(define (fib n)
+  "Compute the nth Fibonacci number"
+  (match n
+    (0 0)
+    (1 1)
+    (_ (+ (fib (- n 1))
+          (fib (- n 2))))))

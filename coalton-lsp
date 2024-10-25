@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+#
+# Run a Coalton server
+#
+# Usage:
+#
+#     coalton-lsp [ port ]
+#
+#         (port defaults to 7887)
+
+port=${1:-7887}
+
+sbcl \
+    --noinform \
+    --load coalton-lsp.asd \
+    --eval "(asdf:load-system \"coalton-lsp\")" \
+    --eval "(coalton-lsp:main :port ${port})"

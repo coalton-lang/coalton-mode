@@ -1,31 +1,51 @@
-This directory contains the source code for an Emacs mode that supports
-working with Coalton code.
+This is an Emacs mode that supports working with Coalton. Most of the
+logic is implemented as an LSP server.
 
 ## Requirements
 
-This mode requires Emacs version > 29.1 because it relies on
-tree-sitter. You can check that your copy of Emacs was built with
-support for tree sitter by evaluating:
+This mode has been developed using `eglot`, which is included with
+Emacs since version 29. The mode can be installed with
+`M-x package-install RET eglot RET` in Emacs 26.3 and later.
 
-    (treesit-available-p)
+In addition to Coalton, the LSP server process depends on the
+following Lisp libraries:
 
-## Installation
+- alexandria
+- bordeaux-threads
+- com.inuoe.jzon
+- usocket
 
-In your emacs init file (probably `~/.emacs.d/init.el` or `~/.emacs`), 
-add this directory to your load-path, and require the mode:
+## Current Status
+
+Supported LSP features:
+
+- diagnostics: whenever a .coal file is saved, the contents are
+  compiled, and diagnostics are published to the client.
+
+## Usage
+
+In the Emacs init file (e.g. `~/.emacs.d/init.el`), add this
+directory to the load-path, and require the mode:
 
     ;; Coalton
     
     (add-to-list 'load-path "~/git/coalton-mode")
     (require 'coalton-mode)
 
-## Usage
+Start the server in slime with:
 
-There is an example file, `types.coal` in the `test/` directory.
+    SLIME 2.30.git
+    CL-USER> (asdf:load-system "coalton-lsp")
+    ;; COALTON starting in development mode
+    ;; COALTON starting with specializations enabled
+    ;; COALTON starting with heuristic inlining disabled
+    ;; COALTON will emit type annotations
+    T
+    CL-USER> (coalton-lsp::start-server)
+    ;; :INFO coalton-mode: start #<SERVER 127.0.0.1:7887 {700D0A4333}>
+    #<COALTON-MODE::SERVER 127.0.0.1:7887 {700D0A4333}>
 
-The first time you open a `.coal` file, Emacs will ask you to approve
-the installation of a parser component:
+In Emacs, open a .coal file (e.g. resources/fibonacci.coal), and
+enable eglot mode:
 
-    tree-sitter-coalton is not installed. Clone, build and install it?
-    
-(Answer 'yes')
+    M-x eglot
