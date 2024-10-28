@@ -46,11 +46,11 @@
   (:uri uri)
   (:range range))
 
-(define-union progress-token
+(define-union token
     (integer string))
 
 (define-message work-done-progress-params ()
-  (:work-done-token progress-token))
+  (:work-done-token token))
 
 ;;; Errors
 
@@ -516,7 +516,7 @@
 (define-message diagnostic ()
   (:range range)
   (:severity (diagnostic-severity :optional t))
-  (:code (string :optional t))          ; FIXME union int | str
+  (:code (token :optional t))
   (:source (string :optional t))
   (:message string)
   (:tags (diagnostic-tag :vector t :optional t))

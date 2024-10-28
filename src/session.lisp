@@ -70,15 +70,15 @@
     (let ((uri (cdr (assoc "uri" document :test #'string=))))
       (/info "open ~a" uri)
       (cond ((gethash uri (session-documents session))
-             (/info "already open ~a" uri))
+             (/warn "already open ~a" uri))
             (t
              (setf (gethash uri (session-documents session)) document)
              (submit-event session 'document-opened uri))))))
 
-(defun change-document (session document) ; FIXME endpoint
+(defun change-document (session document)
   (with-session-context (session)
     (let ((uri (cdr (assoc "uri" document :test #'string=))))
-      (submit-event session 'document-opened uri))))
+      (submit-event session 'document-changed uri))))
 
 (defclass uri-source ()
   ((uri :initarg :uri)))
@@ -119,7 +119,7 @@
 
 (defun make-diagnostics (c)
   (mapcar (lambda (e)
-            (let ((coalton-impl/settings:*coalton-print-unicode* nil)) ; -> ? wut
+            (let ((coalton-impl/settings:*coalton-print-unicode* nil))
               (destructuring-bind (note message start end) e
                 (message-value
                  (make-diagnostic (car start) (cdr start)
@@ -140,13 +140,17 @@
           (coalton-impl/source::source-condition (c)
             (make-diagnostics c)))))))
 
-(defun document-opened (session uri)
-  (let* ((diagnostics (compile-uri uri))
-         (message (make-message 'text-document-publish-diagnostics-params)))
+(defun update-diagnostics (session uri)
+  (let ((message (make-message 'text-document-publish-diagnostics-params)))
     (set-field message :uri uri)
-    (set-field message :diagnostics diagnostics)
-    (let ((notification (make-notification "textDocument/publishDiagnostics" message)))
-      (submit-event session 'write-message notification))))
+    (set-field message :diagnostics (compile-uri uri))
+    (notify session "textDocument/publishDiagnostics" message)))
+
+(defun document-opened (session uri)
+  (update-diagnostics session uri))
+
+(defun document-changed (session uri)
+  (update-diagnostics session uri))
 
 (defun session-stream (session)
   (usocket:socket-stream (slot-value session 'socket)))
@@ -188,6 +192,9 @@
       (set-field notification :method method)
       (set-field notification :params (message-value params))
       notification)))
+
+(defun notify (session method value)
+  (submit-event session 'write-message (make-notification method value)))
 
 (defun message-p (message message-class)
   (eq (name (slot-value message 'class)) message-class))

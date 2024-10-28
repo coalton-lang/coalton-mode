@@ -24,7 +24,7 @@
 
 (deftest session-tests/set-field ()
   (let ((params (lsp::make-message 'lsp::initialize-params)))
-    (lsp::message-value (lsp::set-field-1 params :capabilities 'x)))
+    (lsp::message-value (lsp::%set-key params :capabilities 'x)))
   (let ((params (lsp::make-message 'lsp::initialize-params)))
     (lsp::set-field params '(:capabilities :workspace) 'x)))
 

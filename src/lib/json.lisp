@@ -33,7 +33,9 @@
       (com.inuoe.jzon:write-value writer (com.inuoe.jzon:parse string)))))
 
 (defgeneric jzon-value (message-class value)
-  (:documentation "Convert a message to a value that can be directly serialized by jzon."))
+  (:documentation "Convert a message to a value that can be directly serialized by jzon.")
+  (:method (message-class value)
+    value))
 
 ;;; The values of atoms are all lisp atomic types that jzon serializes
 ;;; correctly.
@@ -43,9 +45,6 @@
          (or value 'null))
         (t
          (error "non-atom value in atom field: check the field type? value: ~s" value))))
-
-(defmethod jzon-value ((self message-enum) value)
-  value)
 
 ;;; Construct a jzon value, considering the 'vector and 'optional
 ;;; properties of a field.

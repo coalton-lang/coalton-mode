@@ -2,7 +2,7 @@
   (import
     coalton-prelude)
   (export
-    fob))
+    fib))
 
 (declare fib (Integer -> Integer))
 (define (fib n)
