@@ -24,14 +24,14 @@
 
 (defun submit-event (session method value)
   (with-session-context (session)
-    (/debug "submit-event ~a ~a" method value)
+    (/trace "submit-event ~a ~a" method value)
     (with-slots (event-queue) session
       (enqueue event-queue (cons method value)))))
 
 (defun process-event (session event)
   (with-session-context (session)
     (destructuring-bind (method . value) event
-      (/debug "process-event ~a" method)
+      (/trace "process-event ~a" method)
       (funcall method session value))))
 
 (defun session-uri (session)
@@ -48,6 +48,9 @@
 (defun initializing-session (session params)
   (setf (session-state session) 'initializing)
   (setf (session-params session) params))
+
+(defun shutdown-session (session)
+  (setf (session-state session) 'shutting-down))
 
 (defun initialized-session (session)
   (with-session-context (session)
@@ -262,9 +265,11 @@
 
 (defun process-request (session request)
   (handler-case
-      (let* ((handler (get-message-handler (request-method request)))
+      (let* ((method (request-method request))
+             (handler (get-message-handler method))
              (params (request-params request))
              (result (funcall (message-handler-fn handler) session params)))
+        (/debug "processing request: '~a'" method)
         (make-response (get-field request :id) result))
     (lsp-error (condition)
       (make-error-response (get-field request :id) condition))))

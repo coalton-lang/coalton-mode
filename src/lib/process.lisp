@@ -73,20 +73,21 @@
   (loop :while (and (run-p worker)
                     (not (empty-p worker)))
         :do (let ((element (dequeue worker)))
-              (/debug "about to process one entry")
-              (handler-case
-                  (funcall (slot-value worker 'fn) element)
-                (condition (condition)
-                  (when *worker-debug*
-                    (signal condition))
-                  (/error "ignoring error : ~a" condition))))))
+              (/trace "service-queue: process ~a" element)
+              (cond (*worker-debug*
+                     (funcall (slot-value worker 'fn) element))
+                    (t
+                     (handler-case
+                         (funcall (slot-value worker 'fn) element)
+                       (condition (condition)
+                         (/error "ignoring error : ~a" condition))))))))
 
 (defmethod run ((self worker))
   (with-logging-context (:worker (lambda (stream)
                                    (write-string "worker" stream)))
-    (/debug "starting")
+    (/trace "starting")
     (unwind-protect
          (loop :while (run-p self)
                :do (service-queue self)
                    (sleep *worker-poll-interval*))
-      (/debug "stopping"))))
+      (/trace "stopping"))))

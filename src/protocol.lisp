@@ -388,6 +388,43 @@
   (:resolve-provider (boolean :optional t))
   (:completion-item (completion-item-options :optional t)))
 
+(define-message document-filter ()
+  (:language (string :optional t))
+  (:scheme (string :optional t))
+  (:pattern (string :optional t)))
+
+(define-message text-document-registration-options ()
+  (:document-selector (document-filter :vector t :optional t)))
+
+(define-message empty ())
+
+(define-message delta ()
+  (:delta (boolean :optional t)))
+
+(define-union range-option (boolean empty))
+
+(define-union full-option (boolean delta))
+
+(define-message semantic-tokens-legend ()
+  (:token-types (string :vector t))
+  (:token-modifiers (string :vector t)))
+
+(define-message semantic-tokens-options (work-done-progress-options)
+  (:legend semantic-tokens-legend)
+  (:range (range-option :optional t))
+  (:full (full-option :optional t)))
+
+(define-message static-registration-options ()
+  (:id (string :optional t)))
+
+(define-message semantic-tokens-registration-options
+    (text-document-registration-options
+     semantic-tokens-options
+     static-registration-options))
+
+(define-union document-symbol-provider-options
+  (boolean document-symbol-options))
+
 (define-message server-capabilities ()
   (:position-encoding (position-encoding-kind :optional t))
   (:text-document-sync (text-document-sync-options :optional t))
@@ -401,7 +438,7 @@
   #++ (:implementation-provider (or boolean implementation-options implementation-registration-options))
   #++ (:references-provider (or boolean reference-options))
   #++ (:document-highlight-provider (or boolean document-highlight-options))
-  (:document-symbol-provider (document-symbol-options :optional t))
+  (:document-symbol-provider (document-symbol-provider-options :optional t))
   #++ (:code-action-provider (or boolean code-action-options))
   #++ (:code-lens-provider (code-lens-options :optional t))
   (:document-link-provider (document-link-options :optional t))
@@ -415,7 +452,7 @@
   #++ (:selection-range-provider (or boolean selection-range-options selection-range-registration-options))
   #++ (:linked-editing-range-provider (or boolean linked-editing-range-options linked-editing-range-registration-options))
   #++ (:call-hierarchy-provider (or boolean call-hierarchy-options call-hierarchy-registration-options))
-  #++ (:semantic-tokens-provider (or semantic-tokens-options semantic-tokens-registration-options))
+  (:semantic-tokens-provider semantic-tokens-registration-options)
   #++ (:moniker-provider (or boolean moniker-options moniker-registration-options))
   #++ (:type-hierarchy-provider (or boolean type-hierarchy-options type-hierarchy-registration-options))
   #++ (:inline-value-provider (or boolean inline-value-options inline-value-registration-options))
@@ -437,6 +474,14 @@
     (set-field result (list :capabilities :text-document-sync :change) :full)
     (set-field result (list :capabilities :definition-provider :work-done-progress) t)
     (set-field result (list :capabilities :document-formatting-provider :work-done-progress) t)
+    (set-field result (list :capabilities :document-symbol-provider) t)
+    (set-field result (list :capabilities :semantic-tokens-provider :legend :token-types)
+               '("namespace" "type" "function" "macro" "keyword" "class" "variable" "method"
+                 "event" "interface"))
+    (set-field result (list :capabilities :semantic-tokens-provider :legend :token-modifiers)
+               '("definition" "defaultLibrary" "implementation"))
+    (set-field result (list :capabilities :semantic-tokens-provider :range) t)
+    (set-field result (list :capabilities :semantic-tokens-provider :full) t)
     (set-field result (list :capabilities :position-encoding)
                (position-encoding session))
     result))
@@ -444,6 +489,15 @@
 (define-handler "initialize"
   initialize-params
   handle-initialize)
+
+(defun handle-shutdown (session params)
+  (declare (ignore params))
+  (shutdown-session session)
+  (make-message 'empty))
+
+(define-handler "shutdown"
+  empty
+  handle-shutdown)
 
 (define-message initialized-params ())
 
