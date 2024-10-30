@@ -24,14 +24,14 @@
 
 (defun submit-event (session method value)
   (with-session-context (session)
-    (/debug "submit-event ~a ~a" method value)
+    (/trace "submit-event ~a ~a" method value)
     (with-slots (event-queue) session
       (enqueue event-queue (cons method value)))))
 
 (defun process-event (session event)
   (with-session-context (session)
     (destructuring-bind (method . value) event
-      (/debug "process-event ~a" method)
+      (/trace "process-event ~a" method)
       (funcall method session value))))
 
 (defun session-uri (session)
@@ -48,6 +48,9 @@
 (defun initializing-session (session params)
   (setf (session-state session) 'initializing)
   (setf (session-params session) params))
+
+(defun shutdown-session (session)
+  (setf (session-state session) 'shutting-down))
 
 (defun initialized-session (session)
   (with-session-context (session)
@@ -70,15 +73,15 @@
     (let ((uri (cdr (assoc "uri" document :test #'string=))))
       (/info "open ~a" uri)
       (cond ((gethash uri (session-documents session))
-             (/info "already open ~a" uri))
+             (/warn "already open ~a" uri))
             (t
              (setf (gethash uri (session-documents session)) document)
              (submit-event session 'document-opened uri))))))
 
-(defun change-document (session document) ; FIXME endpoint
+(defun change-document (session document)
   (with-session-context (session)
     (let ((uri (cdr (assoc "uri" document :test #'string=))))
-      (submit-event session 'document-opened uri))))
+      (submit-event session 'document-changed uri))))
 
 (defclass uri-source ()
   ((uri :initarg :uri)))
@@ -119,7 +122,7 @@
 
 (defun make-diagnostics (c)
   (mapcar (lambda (e)
-            (let ((coalton-impl/settings:*coalton-print-unicode* nil)) ; -> ? wut
+            (let ((coalton-impl/settings:*coalton-print-unicode* nil))
               (destructuring-bind (note message start end) e
                 (message-value
                  (make-diagnostic (car start) (cdr start)
@@ -140,13 +143,17 @@
           (coalton-impl/source::source-condition (c)
             (make-diagnostics c)))))))
 
-(defun document-opened (session uri)
-  (let* ((diagnostics (compile-uri uri))
-         (message (make-message 'text-document-publish-diagnostics-params)))
+(defun update-diagnostics (session uri)
+  (let ((message (make-message 'text-document-publish-diagnostics-params)))
     (set-field message :uri uri)
-    (set-field message :diagnostics diagnostics)
-    (let ((notification (make-notification "textDocument/publishDiagnostics" message)))
-      (submit-event session 'write-message notification))))
+    (set-field message :diagnostics (compile-uri uri))
+    (notify session "textDocument/publishDiagnostics" message)))
+
+(defun document-opened (session uri)
+  (update-diagnostics session uri))
+
+(defun document-changed (session uri)
+  (update-diagnostics session uri))
 
 (defun session-stream (session)
   (usocket:socket-stream (slot-value session 'socket)))
@@ -188,6 +195,9 @@
       (set-field notification :method method)
       (set-field notification :params (message-value params))
       notification)))
+
+(defun notify (session method value)
+  (submit-event session 'write-message (make-notification method value)))
 
 (defun message-p (message message-class)
   (eq (name (slot-value message 'class)) message-class))
@@ -255,9 +265,11 @@
 
 (defun process-request (session request)
   (handler-case
-      (let* ((handler (get-message-handler (request-method request)))
+      (let* ((method (request-method request))
+             (handler (get-message-handler method))
              (params (request-params request))
              (result (funcall (message-handler-fn handler) session params)))
+        (/debug "processing request: '~a'" method)
         (make-response (get-field request :id) result))
     (lsp-error (condition)
       (make-error-response (get-field request :id) condition))))

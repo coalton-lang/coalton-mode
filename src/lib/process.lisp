@@ -10,10 +10,10 @@
   (:method (process) "Coalton LSP Process"))
 
 (defgeneric run (process)
-  (:documentation "Run a process. This function is run by a newly started process. IF the function returns, the process will halt."))
+  (:documentation "The function run by a started process. The process halts when it returns."))
 
 (defgeneric stop (process)
-  (:documentation "Synchronously stop a process and immediately return."))
+  (:documentation "Synchronously stop a process."))
 
 (defclass process ()
   ((thread :initform nil)
@@ -32,8 +32,11 @@
 
 (defmethod stop ((self process))
   (with-slots (thread) self
-    (when thread
-      (bt:destroy-thread thread)
+    (when (and thread (bt:thread-alive-p thread))
+      (handler-case
+          (bt:destroy-thread thread)
+        (error (e)
+          (/warn "error during thread cleanup: ~a" e)))
       (setf thread nil)))
   self)
 
@@ -41,6 +44,8 @@
 
 (defvar *worker-poll-interval* 0.250
   "How long to sleep when there is no work to do.")
+
+(defvar *worker-debug* nil)
 
 (defclass worker (process)
   ((fn)
@@ -68,19 +73,21 @@
   (loop :while (and (run-p worker)
                     (not (empty-p worker)))
         :do (let ((element (dequeue worker)))
-              (/debug "about to process one entry")
-              (handler-case
-                  (funcall (slot-value worker 'fn) element)
-                (condition (condition)
-                  (break)
-                  (/error "ignoring error : ~a" condition))))))
+              (/trace "service-queue: process ~a" element)
+              (cond (*worker-debug*
+                     (funcall (slot-value worker 'fn) element))
+                    (t
+                     (handler-case
+                         (funcall (slot-value worker 'fn) element)
+                       (condition (condition)
+                         (/error "ignoring error : ~a" condition))))))))
 
 (defmethod run ((self worker))
   (with-logging-context (:worker (lambda (stream)
                                    (write-string "worker" stream)))
-    (/debug "starting")
+    (/trace "starting")
     (unwind-protect
          (loop :while (run-p self)
                :do (service-queue self)
                    (sleep *worker-poll-interval*))
-      (/debug "exiting"))))
+      (/trace "stopping"))))

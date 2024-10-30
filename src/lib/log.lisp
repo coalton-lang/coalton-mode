@@ -38,6 +38,8 @@
           :reader log-level)
    (lock :initform (bt:make-lock))))
 
+(defmethod stop ((self stream-logger)))
+
 (defvar *levels*
   '(:trace :debug :info :warn :error))
 
@@ -59,7 +61,8 @@
         (write-string " : " stream)
         (%write-context stream)
         (apply #'format stream format format-args)
-        (terpri stream)))))
+        (terpri stream)
+        (force-output stream)))))
 
 (defparameter *logger*
   (make-instance 'stream-logger :stream t :level ':info))
@@ -70,6 +73,24 @@
 
 (defun set-log-level (level)
   (setf (slot-value *logger* 'level) level))
+
+(defclass file-logger (stream-logger)
+  ())
+
+(defmethod stop ((self file-logger))
+  (close (slot-value self 'stream)))
+
+(defun set-log-file (filename)
+  (when *logger*
+    (stop *logger*))
+  (let ((stream (open filename
+                      :direction ':output
+                      :if-exists ':append
+                      :if-does-not-exist ':create
+                      :element-type 'character)))
+    (setf *logger* (make-instance 'file-logger
+                     :stream stream
+                     :level ':debug))))
 
 (defun /trace-p ()
   (log-p *logger* ':trace))

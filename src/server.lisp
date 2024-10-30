@@ -72,7 +72,7 @@
         (stop session))))
   (call-next-method))
 
-(defvar *default-port* 7887
+(defvar *server-port* 7887
   "The default port of LSP sessions.")
 
 (defvar *server* nil
@@ -87,7 +87,7 @@
   (setf *server* nil)
   (/info "server halted"))
 
-(defun start-server (&optional (port *default-port*))
+(defun start-server (&optional (port *server-port*))
   "Run a Coalton LSP server on PORT."
   (when *server*
     (/info "halting server at tcp:~a" (server-address *server*))
@@ -98,7 +98,7 @@
                                :host "127.0.0.1"))))
   (/info "server started at tcp:~a" (server-address *server*)))
 
-(defun main (&key (port *default-port*))
+(defun main (&key (port *server-port*))
   "Run a Coalton LSP server on PORT, halting on interrupt."
   (start-server port)
   (handler-case

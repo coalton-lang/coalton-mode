@@ -57,16 +57,16 @@ The output value will have string-valued map keys.")
   (destructuring-bind (name type) spec
     (destructuring-bind (class optional vector) (parse-field-type type)
       (make-instance 'message-field
-        :name name
-        :json (camel-case name)
-        :class class
-        :optional optional
-        :vector vector))))
+                     :name name
+                     :json (camel-case name)
+                     :class class
+                     :optional optional
+                     :vector vector))))
 
 (defclass message-class (message-type)
   ((fields :initform (make-array 0 :adjustable t :fill-pointer t)
            :reader message-fields)))
-  
+
 (defmethod print-object ((self message-class) stream)
   (with-slots (name fields) self
     (print-unreadable-object (self stream :type t :identity t)
@@ -171,7 +171,7 @@ The output value will have string-valued map keys.")
                  :class (get-message-class class)
                  :value value))
 
-(defun field-1 (message key)            ; FIXME bad name
+(defun %get-key (message key)
   (let ((field (%get-field (message-class message) key)))
     (make-instance 'message
                    :class (message-class field)
@@ -179,10 +179,10 @@ The output value will have string-valued map keys.")
                                       (message-value message)
                                       :test #'string=)))))
 
-(defun field-n (message path)           ; FIXME bad name
-  (reduce #'field-1 (listify path) :initial-value message))
+(defun %get-path (message path)
+  (reduce #'%get-key (listify path) :initial-value message))
 
-(defun set-field-1 (message key value)
+(defun %set-key (message key value)
   (let ((field (%get-field (message-class message) key)))
     (make-message (name (message-class message))
                   (acons (json-key field)
@@ -192,20 +192,19 @@ The output value will have string-valued map keys.")
                                  :key #'car
                                  :test #'string=)))))
 
-(defun with-field (message path value)
+(defun %set-path (message path value)
   (destructuring-bind (key &rest keys) (listify path)
-    (set-field-1 message key
-                 (if (null keys)
-                     value
-                     (message-value (with-field (field-1 message key)
-                                      keys value))))))
+    (%set-key message key
+              (if (null keys)
+                  value
+                  (message-value (%set-path (%get-key message key) keys value))))))
 
 ;; Message API
 
 (defun get-field (message path)
-  (message-value (field-n message (listify path))))
+  (message-value (%get-path message (listify path))))
 
 (defun set-field (message path value)
   (setf (slot-value message 'value)
-        (slot-value (with-field message (listify path) value) 'value))
+        (slot-value (%set-path message (listify path) value) 'value))
   message)
