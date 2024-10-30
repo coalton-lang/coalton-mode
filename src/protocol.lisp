@@ -49,6 +49,9 @@
 (define-union token
     (integer string))
 
+(define-union progress-token
+    (integer string))
+
 (define-message work-done-progress-params ()
   (:work-done-token token))
 
@@ -590,3 +593,35 @@
 (define-handler "textDocument/publishDiagnostics"
   text-document-publish-diagnostics-params
   handle-text-document-publish-diagnostics)
+
+;; request: textDocument/semanticTokens/range
+
+(defun session-semantic-tokens-range (session message)
+  (declare (ignore session message))
+  nil)
+
+(define-message semantic-tokens ()
+  (:data (uinteger :vector t)))
+
+(defun handle-text-document-semantic-tokens-range (session params)
+  (session-semantic-tokens-range session (message-value params))
+  (let ((result (make-message 'semantic-tokens)))
+    (set-field result (list :data)
+               (list 0 9 9 0 0))
+    result))
+
+(define-message partial-result-params ()
+  (:partial-result-token (progress-token :optional t)))
+
+(define-message text-document-identifier ()
+  (:uri uri))
+
+(define-message semantic-tokens-range-params
+    (work-done-progress-params
+     partial-result-params)
+  (:text-document text-document-identifier)
+  (:range range))
+
+(define-handler "textDocument/semanticTokens/range"
+  semantic-tokens-range-params
+  handle-text-document-semantic-tokens-range)
