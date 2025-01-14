@@ -14,6 +14,7 @@ following Lisp libraries:
 - bordeaux-threads
 - com.inuoe.jzon
 - usocket
+- trivial-utf-8
 
 ## Current Status
 

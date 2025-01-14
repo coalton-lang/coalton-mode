@@ -5,7 +5,8 @@
                #:bordeaux-threads
                #:coalton
                #:com.inuoe.jzon
-               #:usocket)
+               #:usocket
+               #:trivial-utf-8)
   :pathname "src/"
   :serial t
   :components ((:file "package")

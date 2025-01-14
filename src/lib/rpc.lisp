@@ -138,7 +138,7 @@
 (defun %write-rpc (message stream)
   (let ((content (message-content message)))
     (write-headers stream
-                   `(("Content-Length" . ,(length content))
+                   `(("Content-Length" . ,(trivial-utf-8:utf-8-byte-length content))
                      ("Content-Type" . "application/json-rpc")))
     (write-sequence content stream)
     (force-output stream)))
